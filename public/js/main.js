@@ -13,6 +13,13 @@ function getParameterByName(name, url) {
 
 const BLUR_RADIUS = parseFloat(getParameterByName('radius')) || 80;
 const INTERVAL_CAPTURE_SECONDS = parseFloat(getParameterByName('interval')) || 5;
+const INTERVAL_UPDATE = parseInt(getParameterByName('update')) || 100;
+
+// strategies on the opacity of the top layer
+const betweenZeroAndOne = number => Math.max(0, Math.min(1, number));
+const logTheNumber = number => { console.log(number); return number; }
+const videoTimeStrategy = (video, lastCapture) => (video.currentTime - lastCapture.videoTime) / INTERVAL_CAPTURE_SECONDS;
+const realTimeStrategy = (video, lastCapture) => (Date.now() - lastCapture.realTime) / (INTERVAL_CAPTURE_SECONDS * 1000);
 
 const fadescreen = (video, lower, upper) => {
   const lastCapture = {
@@ -60,13 +67,18 @@ const fadescreen = (video, lower, upper) => {
       lastCapture.lowerCap = lastCapture.upperCap || lastCapture.lowerCap;
       lastCapture.upperCap = captureFrame();
       lastCapture.videoTime = currentTime;
+      lastCapture.realTime = Date.now();
     }
+  });
 
+  // update the layers every 100ms
+  setInterval(function() {
     // draw and shade all layers as appropriate
     lastCapture.lowerCap && drawLower(lastCapture.lowerCap);
     lastCapture.upperCap && drawUpper(lastCapture.upperCap);
-    upper.style.opacity = Math.max(0, Math.min(1, (video.currentTime - lastCapture.videoTime) / INTERVAL_CAPTURE_SECONDS));
-  });
+    upper.style.opacity = betweenZeroAndOne(videoTimeStrategy(video, lastCapture));
+  }, INTERVAL_UPDATE);
+
 }
 
 fadescreen(
