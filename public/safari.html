@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head> 
+    <style>
+      video, .container {
+        display: inline-block;
+        vertical-align: top;
+        border: 1px solid black;
+      }
+
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <p>Safari Bug: <a href="https://bugs.webkit.org/show_bug.cgi?id=153588">https://bugs.webkit.org/show_bug.cgi?id=153588</a>. 
+      <ul>
+        <li>Capture works if video is hidden (display: none) while playing, then Capture</li>
+        <li>Capture works if, while paused after playing, switch tabs</li>
+      </ul>
+    </p>
+    <div class="container">
+      <canvas id="canvas"></canvas>
+      <button type="button" onclick="document.getElementById('canvas').getContext('2d').drawImage(document.getElementById('video'), 0, 0, 200,200)">Capture</button>
+      <button type="button" onclick="document.getElementById('video').play()">Play</button>
+      <button type="button" onclick="document.getElementById('video').pause()">Pause</button>
+      <button type="button" onclick="document.getElementById('video').style.display='none'">Hide</button>
+      <button type="button" onclick="document.getElementById('video').style.display='inline-block'">Show</button>
+    </div>  
+    <video id="video" src="periscope.mp4" controls="true"></video>
+  </body>
+  
+</html>
