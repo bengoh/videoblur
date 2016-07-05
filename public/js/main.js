@@ -1,4 +1,5 @@
 /* global window, document, drawImage, stackBlur */
+// very useful reference: https://www.w3.org/2010/05/video/mediaevents.html
 
 // lifted from http://stackoverflow.com/a/901144
 function getParameterByName(name, url) {
@@ -61,9 +62,10 @@ const fadescreen = (video, lower, upper) => {
     drawLower(lastCapture.lowerCap);
   });
 
+  // if the difference between the current time and last captured time exceeds
+  // the interval, make a new capture. Works in both time directions.
   video.addEventListener('timeupdate', ({ target: { currentTime } }) => {
-    if (currentTime - lastCapture.videoTime > INTERVAL_CAPTURE_SECONDS) {
-      // 5 seconds have passed, make a new capture
+    if (Math.abs(currentTime - lastCapture.videoTime) > INTERVAL_CAPTURE_SECONDS) {
       lastCapture.lowerCap = lastCapture.upperCap || lastCapture.lowerCap;
       lastCapture.upperCap = captureFrame();
       lastCapture.videoTime = currentTime;
@@ -71,12 +73,15 @@ const fadescreen = (video, lower, upper) => {
     }
   });
 
-  // update the layers every 100ms
+  // update the layers every 100ms. Do not update if the video is not playing.
+  // using "timeupdate" to do this is not as reliable and generally slower (~ 3times/sec)
   setInterval(function() {
     // draw and shade all layers as appropriate
-    lastCapture.lowerCap && drawLower(lastCapture.lowerCap);
-    lastCapture.upperCap && drawUpper(lastCapture.upperCap);
-    upper.style.opacity = betweenZeroAndOne(videoTimeStrategy(video, lastCapture));
+    if (!video.paused) {
+      lastCapture.lowerCap && drawLower(lastCapture.lowerCap);
+      lastCapture.upperCap && drawUpper(lastCapture.upperCap);
+      upper.style.opacity = logTheNumber(betweenZeroAndOne(videoTimeStrategy(video, lastCapture)));
+    }
   }, INTERVAL_UPDATE);
 
 }
