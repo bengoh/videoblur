@@ -11,16 +11,29 @@
 
 let images;
 // generate image data
-images = Array(5).fill(5).map(color => {
+images = Array(5).fill(5).map((_, idx) => {
   const canvas = document.createElement("canvas");
   canvas.width = 500;
   canvas.height = 500;
   const ctx = canvas.getContext("2d");
-  const randomWidth = Math.floor(Math.random() * canvas.width);
-  const randomHeight = Math.floor(Math.random() * canvas.height);
+  const randomWidth = 100 * (idx + 1);
+  const randomHeight = 100 * (idx + 1);
   ctx.fillStyle = '#' + ('000000' + Math.floor(Math.random() * 256*256*256).toString('16')).slice(-6);
   ctx.fillRect(0, 0, randomWidth, randomHeight);
   return ctx.getImageData(0, 0, randomWidth, randomHeight);
+});
+
+[
+  'http://i.imgur.com/xXT22yy.jpg',
+  'http://i.imgur.com/NpiCpFZ.jpg',
+  'http://i.imgur.com/XjKO25E.jpg',
+  'http://i.imgur.com/LYgnynJ.jpg',
+  '//i.imgur.com/MWOpgtD.png',
+  '//i.imgur.com/SgkPr2t.png',
+  '//i.imgur.com/LSAvwNg.png',
+  '//i.imgur.com/Om9hD7E.png',
+].forEach(url => {
+  images.splice(Math.floor(Math.random() * images.length), 0, url);
 });
 
 

@@ -61,10 +61,13 @@ class ReactBlur extends React.Component {
   }
 
   componentWillUpdate(nextProps, nextState) {
-    // detect changes in state and inform componentWillUpdate to perform
+    // detect canvas related changes in state and inform componentWillUpdate to perform
     // canvas rerendering if needed
     const fields = ['imgSrc', 'imgData', 'blurRadius', 'width', 'height'];
-    this.hasDirty = !this.state || fields.some(field => this.state[field] !== nextState[field]);
+    const isStateInitialization = !this.state;
+
+    this.hasDirty = isStateInitialization || fields.some(field => this.state[field] !== nextState[field]);
+    this.imageChanged = isStateInitialization || ['imgSrc', 'imgData'].some(imgField => this.state[imgField] !== nextState[imgField]);
   }
 
   componentDidUpdate() {
@@ -72,19 +75,17 @@ class ReactBlur extends React.Component {
       this.hasDirty = false;
 
       const isImgData = this.state.imgData;
-      if (!isImgData) {
-        console.log('🔴 WTFFFFF', this.state.imgData, this.props.imgData);
-      }
-
       const loadImagePromise = isImgData ? Promise.resolve() : this.loadImage(this.state.imgSrc);
+
       loadImagePromise.then((event) => {
-        if (event || this.state.imgData) {
+        if (this.imageChanged) {
           this.props.onLoadFunction(event);
         }
 
         const canvas = ReactDOM.findDOMNode(this.refs.canvas);
         canvas.height = this.state.height;
         canvas.width = this.state.width;
+
         if (isImgData) {
           canvas.getContext('2d').putImageData(this.state.imgData, 0, 0);
           stackBlurCanvasRGB(canvas, 0, 0, this.state.width, this.state.height, this.state.blurRadius);
@@ -99,7 +100,6 @@ class ReactBlur extends React.Component {
   loadImage(src) {
     return new Promise((resolve, reject) => {
       if (this.img && this.img.src === src) {
-        console.log('no image change detected');
         return resolve(); // no event, no change in image
       } else if (!this.img) {
         this.img           = new Image();

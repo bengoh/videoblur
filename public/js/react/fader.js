@@ -62,6 +62,8 @@ class Fader extends React.Component {
 					staticLayers = staticLayers.slice(0, props.maxLayers);
 				}
 
+				const key = Date.now();
+
 				// clear layer loaded tracking, trim static layers if needed, initiate new animateLayer
 				this.setState({
 					staticLayers,
@@ -127,13 +129,9 @@ class Fader extends React.Component {
 			zIndex: props.maxLayers + 1,
 			opacity: state.animateLayer.opacity || 0
 		};
-
-		if (!state.animateLayer.image) {
-			console.log('how the fuck is this possible????');
-		}
 		
 		return <div className={ props.containerClassName }>
-			<ReactBlur layerName="animate" className={props.className} {...makeImageProp(state.animateLayer.image)} onLoadFunction={this.doFading.bind(this)} blurRadius={props.blurRadius} style={animateLayerStyle} resizeInterval={2000} />
+			<ReactBlur layerName={`animate`} className={props.className} {...makeImageProp(state.animateLayer.image)} onLoadFunction={this.doFading.bind(this)} blurRadius={props.blurRadius} style={animateLayerStyle} />
 			{
 				state.staticLayers.map((layer, idx) => {
 					const staticLayerStyle = {
@@ -141,7 +139,7 @@ class Fader extends React.Component {
 						opacity: layer.opacity
 					};
 
-					return <ReactBlur layerName={`staticLayer${idx}`} key={layer.key} className={props.className} {...makeImageProp(layer.image)} onLoadFunction={this.layerLoadCheckpoint(layer.key)} blurRadius={props.blurRadius} style={staticLayerStyle} resizeInterval={2000} />;
+					return <ReactBlur layerName={`staticLayer${idx}`} key={layer.key} className={props.className} {...makeImageProp(layer.image)} onLoadFunction={this.layerLoadCheckpoint(layer.key)} blurRadius={props.blurRadius} style={staticLayerStyle} />;
 				})
 			}
 		</div>;
