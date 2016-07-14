@@ -1,12 +1,16 @@
 function isImageData(image) {
-	return image.constructor.name === 'ImageData';
+	return image && image.constructor.name === 'ImageData';
 }
 
 function isDifferentImageData(iData1, iData2) {
 	return iData1.data !== iData2.data; // more precise, performant way to compare?
 }
 
-const MAX_LAYERS = 5;
+function makeImageProp(image) {
+	return {
+		[isImageData(image) ? 'imgData' : 'img']: image
+	};
+}
 
 class Fader extends React.Component {
 
@@ -14,7 +18,8 @@ class Fader extends React.Component {
 	  // fade over 5 seconds every 50 milliseconds
 	  return {
 	       fadeDuration: 5000,
-	       fadeResolution: 50
+	       fadeResolution: 50,
+	       maxLayers: 3
 	  };
 	}
 
@@ -28,9 +33,11 @@ class Fader extends React.Component {
 		let animateLayer = { ...state.animateLayer };
 
 		if (animateLayer.opacity < 1) {
+			// console.log(`Incrementing animate layer ${animateLayer.image} opacity ${animateLayer.opacity} + ${opacityIncrement} over ${props.fadeResolution}`);
 			animateLayer.opacity += opacityIncrement;
-			setTimeout(this.doFading.bind(this), props.fadeResolution); // continue fading in
+			this.currentFading = setTimeout(this.doFading.bind(this), props.fadeResolution); // continue fading in
 		} else {
+			// console.log(`Stopping animate layer ${animateLayer.image} because opacity ${animateLayer.opacity}`);
 			animateLayer.opacity = 1;
 		}
 		this.setState({ animateLayer });
@@ -38,30 +45,42 @@ class Fader extends React.Component {
 
 	layerLoadCheckpoint(key) {
 		return function handler() {
-			const { state } = this;
-			const { loadedLayers } = state;
+			const { state, props } = this;
+			let { loadedLayers, staticLayers } = state;
 
 			loadedLayers[key] = true;
+			console.log(`marking ${key} as loaded`);
 
 			// have all lower layers loaded?
 			if (Object.keys(loadedLayers).every(layerKey => loadedLayers[layerKey])) {
-				// clear layer loaded tracking, initiate new animateLayer
+				// console.log(`all static layers loaded, creating new animate layer ${key} ${state.nextImage}`);
+
+				loadedLayers = {};
+
+				// prevent creation of too many layers
+				if (staticLayers.length > props.maxLayers) {
+					staticLayers = staticLayers.slice(0, props.maxLayers);
+				}
+
+				// clear layer loaded tracking, trim static layers if needed, initiate new animateLayer
 				this.setState({
-					loadedLayers: {},
+					staticLayers,
+					loadedLayers,
 					animateLayer: {
-						image: state.nextImage,
+						image: this.nextImage,
 						opacity: 0,
 						key: Date.now()
-					},
-					nextImage: undefined
+					}
 				});
+
+				// delete this.nextImage;
 			}
 		}.bind(this);
 	}
 
 	// once, before initial render
 	componentWillMount() {
-		const { props, state } = this;
+		const { props } = this;
 		// we begin with an opaque animate layer and an empty set of static layers
 		this.setState({
 			animateLayer: {
@@ -78,43 +97,51 @@ class Fader extends React.Component {
 	// props may not have changed
 	componentWillReceiveProps(nextProps) {
 		const { props, state } = this;
-		const bothImageData = isImageData(state.animateLayer.image) && isImageData(nextProps.image);
-		const imageDataChanged = bothImageData && isDifferentImageData(state.animateLayer.image, nextProps.image);
-		const otherChange = !bothImageData && (nextProps.image !== state.animateLayer.image);
+		const { image: nextImage } = nextProps;
+		const bothImageData = isImageData(state.animateLayer.image) && isImageData(nextImage);
+		const imageDataChanged = bothImageData && isDifferentImageData(nextImage, state.animateLayer.image);
+		const otherChange = !bothImageData && (nextImage !== state.animateLayer.image);
 
 		if (imageDataChanged || otherChange) {
-			const staticLayers = state.staticLayers;
-			const loadedLayers = state.loadedLayers;
-			const nextImage = nextProps.image;
+			const { staticLayers, loadedLayers } = state;
 			const key = Date.now();
 
-			// shuffle the animate layer down. When all static layers are loaded, then start the animation process.
+			//console.log(`Migrating current animate layer to static layer ${key}`);
+			
+			// suspend any ongoing animation and shuffle the animate layer into the static layers.
+			// When all static layers are loaded, then restart the animation process.
+			clearTimeout(this.currentFading);
 			staticLayers.unshift({ ...state.animateLayer, key});
 			loadedLayers[key] = false;
-			this.setState({ staticLayers, loadedLayers, nextImage });
+			this.nextImage = nextImage;
+			this.setState({ staticLayers, loadedLayers });
 		}
 	}
 
 	// the important thing is that React cannot be allowed manage the images / image transitions.
-	// this must be manually handled as part of canvas drawing / CSS.
+	// this must be manually handled as part of canvas drawing / CSS via state.
 	render() {
 		const { state, props } = this;
 		
 		const animateLayerStyle = {
-			zIndex: MAX_LAYERS + 1,
+			zIndex: props.maxLayers + 1,
 			opacity: state.animateLayer.opacity || 0
 		};
 
+		if (!state.animateLayer.image) {
+			console.log('how the fuck is this possible????');
+		}
+		
 		return <div className={ props.containerClassName }>
-			<ReactBlur className={props.className} img={state.animateLayer.image} onLoadFunction={this.doFading.bind(this)} blurRadius={props.blurRadius} style={animateLayerStyle} />
+			<ReactBlur layerName="animate" className={props.className} {...makeImageProp(state.animateLayer.image)} onLoadFunction={this.doFading.bind(this)} blurRadius={props.blurRadius} style={animateLayerStyle} resizeInterval={2000} />
 			{
 				state.staticLayers.map((layer, idx) => {
 					const staticLayerStyle = {
-						zIndex: MAX_LAYERS - idx, // top to bottom
+						zIndex: props.maxLayers - idx, // top to bottom
 						opacity: layer.opacity
 					};
 
-					return <ReactBlur key={layer.key} className={props.className} img={layer.image} onLoadFunction={this.layerLoadCheckpoint(layer.key)} blurRadius={props.blurRadius} style={staticLayerStyle} />;
+					return <ReactBlur layerName={`staticLayer${idx}`} key={layer.key} className={props.className} {...makeImageProp(layer.image)} onLoadFunction={this.layerLoadCheckpoint(layer.key)} blurRadius={props.blurRadius} style={staticLayerStyle} resizeInterval={2000} />;
 				})
 			}
 		</div>;
