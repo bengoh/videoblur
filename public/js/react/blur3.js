@@ -20,68 +20,6 @@ function eitherImgOrImgData(props, propName) {
   }
 }
 
-function transferImageData(imageData, targetCanvas) {
-  // first, create a virtual canvas with the same dimensions as the imageData
-  // and paint it.
-  const offscreen = document.createElement('canvas');
-  const context = offscreen.getContext('2d');
-  
-  const naturalWidth = offscreen.width = imageData.width;
-  const naturalHeight = offscreen.height = imageData.height;
-  
-  // we obtain the current "canvas" dimensions of the target canvas
-  const width = targetCanvas.width;
-  const height = targetCanvas.height;
-  
-  // we draw the imageData onto the canvas directly first
-  context.putImageData(imageData, 0, 0);
-  
-  // we then compute the new dimensions we want to achieve
-  const squeezeFactor = naturalWidth / width;
-  const flattenFactor = naturalHeight / height;
-  const moreSqueezedThanFlattened = squeezeFactor > flattenFactor;
-  const ratio = moreSqueezedThanFlattened ? flattenFactor : squeezeFactor;
-  const finalWidth = naturalWidth / ratio;
-  const finalHeight = naturalHeight / ratio;
-
-  const left = Math.floor((finalWidth - width) / -2);
-  const top = Math.floor((finalHeight - height) / -2);
-  const intWidth = Math.ceil(finalWidth);
-  const intHeight = Math.ceil(finalHeight);
-
-  // we then draw onto the target canvas itself by using the offscreen canvas
-  // as an image source
-  const targetContext = targetCanvas.getContext('2d');
-  targetContext.clearRect(0, 0, width, height);
-  targetContext.drawImage(offscreen, left, top, intWidth, intHeight);
-}
-
-function cheatBlur(imageData, targetCanvas, blurRadius) {
-  // the cheat blur
-  // 1. renders the imageData into a fixed 300x150 space (using transferImageData)
-  // 2. blurs ONLY in the 300x150 space
-  // 3. renders THAT blur data into the target canvas full size
-  const cheatCanvas = document.createElement('canvas');
-  const cheatContext = cheatCanvas.getContext('2d');
-  cheatCanvas.width = 300;
-  cheatCanvas.height = 150;
-
-  transferImageData(imageData, cheatCanvas);
-  stackBlurCanvasRGB(cheatCanvas, 0, 0, cheatCanvas.width, cheatCanvas.height, blurRadius);
-  const blurredImageData = cheatCanvas.getContext('2d').getImageData(0, 0, cheatCanvas.width, cheatCanvas.height);
-  transferImageData(blurredImageData, targetCanvas);
-}
-
-function blasphemousBlur(imageData, targetCanvas, blurRadius) {
-  // like cheatBlur, but don't even hve an intermediate canvas
-  const targetContext = targetCanvas.getContext('2d');
-  targetCanvas.width = 300;
-  targetCanvas.height = 150;
-
-  transferImageData(imageData, targetCanvas);
-  stackBlurCanvasRGB(targetCanvas, 0, 0, targetCanvas.width, targetCanvas.height, blurRadius);
-}
-
 class ReactBlur extends React.Component {
   static propTypes = {
     img           : eitherImgOrImgData,
@@ -153,10 +91,7 @@ class ReactBlur extends React.Component {
         canvas.width = this.state.width;
 
         if (isImgData) {
-          console.log(`Doing expensive render on ${this.props.layerName}`);
-          //transferImageData(this.state.imgData, canvas);
-          //stackBlurCanvasRGB(canvas, 0, 0, 100, 100, this.state.blurRadius);
-          blasphemousBlur(this.state.imgData, canvas, this.state.blurRadius);
+          microBlur(this.state.imgData, canvas, this.state.blurRadius);
         } else {
           stackBlurImage(this.img, canvas, this.state.blurRadius, this.state.width, this.state.height);  
         }

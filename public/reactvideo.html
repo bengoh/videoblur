@@ -17,22 +17,22 @@
         line-height: 100%;
       }
 
-      .layered canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-
-      .layered #reactblur {
-        display: inline-block;
+      .layered #video {
+        display: inline;
         position: absolute;
         z-index: 100;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+        width: 100%;
+        max-height: 100%;
+      }      
+
+      .layered #fader {
+        position: absolute;
+        z-index: 99;
         top: 0;
         left: 0;
-        background-color: white;
-        color: black;
         width: 100%;
         height: 100%;
       }
@@ -41,14 +41,8 @@
           position: absolute;
           top: 0;
           left: 0;
-      }
-
-      #lower {
-        z-index: 1;
-      }
-
-      #upper {
-        z-index: 2;
+          width: 100%;
+          height: 100%;
       }
 
       .fullscreen {
@@ -64,15 +58,16 @@
 
   <body>
     <div class="layered">
-      <div id="reactblur"></div>
-    </div>
+      <video id="video" src="periscope.mp4" controls="true"></video>
+      <div id="fader"></div>
+    </div>  
     <script src="/vendor/stackblur.js"></script>
+    <script src="/vendor/imagedata.js"></script>
     <script src="/vendor/react-with-addons.js"></script>
     <script src="/vendor/react-dom.js"></script>
-    <script src="/js/react/blur.js"></script>
+    <script src="/js/react/blur3.js"></script>
     <script src="/js/react/fader.js"></script>
-    <script src="/js/react/dataurls.js"></script>
-    <script src="/js/react/main.js"></script>
+    <script src="/js/react/mainvideo.js"></script>
   </body>
 
   

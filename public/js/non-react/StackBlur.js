@@ -110,6 +110,8 @@ function stackBlur(canvas, radius, blurAlphaChannel)
     const fn = blurAlphaChannel ? stackBlurCanvasRGBA : stackBlurCanvasRGB;
     const context = canvas.getContext('2d');
 
+    console.log(`blurring size ${canvas.width} x ${canvas.height}`);
+
     fn(context, 0, 0, canvas.width, canvas.height, radius);
 }
 

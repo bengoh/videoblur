@@ -18,7 +18,7 @@ class Fader extends React.Component {
 	  // fade over 5 seconds every 50 milliseconds
 	  return {
 	       fadeDuration: 5000,
-	       fadeResolution: 50,
+	       fadeResolution: 100,
 	       maxLayers: 3
 	  };
 	}
@@ -49,7 +49,7 @@ class Fader extends React.Component {
 			let { loadedLayers, staticLayers } = state;
 
 			loadedLayers[key] = true;
-			console.log(`marking ${key} as loaded`);
+			// console.log(`marking ${key} as loaded`);
 
 			// have all lower layers loaded?
 			if (Object.keys(loadedLayers).every(layerKey => loadedLayers[layerKey])) {
@@ -131,7 +131,7 @@ class Fader extends React.Component {
 		};
 		
 		return <div className={ props.containerClassName }>
-			<ReactBlur layerName={`animate`} className={props.className} {...makeImageProp(state.animateLayer.image)} onLoadFunction={this.doFading.bind(this)} blurRadius={props.blurRadius} style={animateLayerStyle} />
+			<ReactBlur layerName={`animate`} className={props.className} {...makeImageProp(state.animateLayer.image)} onLoadFunction={this.doFading.bind(this)} blurRadius={props.blurRadius} canvasStyle={animateLayerStyle} />
 			{
 				state.staticLayers.map((layer, idx) => {
 					const staticLayerStyle = {
@@ -139,7 +139,7 @@ class Fader extends React.Component {
 						opacity: layer.opacity
 					};
 
-					return <ReactBlur layerName={`staticLayer${idx}`} key={layer.key} className={props.className} {...makeImageProp(layer.image)} onLoadFunction={this.layerLoadCheckpoint(layer.key)} blurRadius={props.blurRadius} style={staticLayerStyle} />;
+					return <ReactBlur layerName={`staticLayer${idx}`} key={layer.key} className={props.className} {...makeImageProp(layer.image)} onLoadFunction={this.layerLoadCheckpoint(layer.key)} blurRadius={props.blurRadius} canvasStyle={staticLayerStyle} />;
 				})
 			}
 		</div>;

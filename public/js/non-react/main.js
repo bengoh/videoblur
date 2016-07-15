@@ -38,6 +38,8 @@ const fadescreen = (video, lower, upper) => {
     const targetWidth = upper.width;
     const targetHeight = upper.height;
     drawImage(video, offscreen, targetWidth, targetHeight);
+    console.log(`capture force ${video.videoWidth} x ${video.videoHeight} into ${targetWidth} x ${targetHeight}`)
+    console.log(`capture size ${width} x ${height}`);
     return offscreen.getContext('2d').getImageData(0, 0, width, height);
   }
 

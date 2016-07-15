@@ -74,7 +74,6 @@ class ReactBlur extends React.Component {
   loadImage(src) {
     return new Promise((resolve, reject) => {
       if (this.img && this.img.src === src) {
-        console.log('no image change detected');
         return resolve(); // no event, no change in image
       } else if (!this.img) {
         this.img           = new Image();
@@ -128,7 +127,7 @@ class ReactBlur extends React.Component {
   }
 
   render() {
-    var { className, children, ...other } = this.props;
+    var { className, children, canvasStyle, ...other } = this.props;
     var classes = 'react-blur';
 
     if (className) {
@@ -137,7 +136,7 @@ class ReactBlur extends React.Component {
 
     return (
       <div {...other} className={classes}>
-        <canvas className='react-blur-canvas' ref='canvas' />
+        <canvas className='react-blur-canvas' style={canvasStyle} ref='canvas' />
         {children}
       </div>
     );
