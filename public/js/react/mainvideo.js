@@ -23,11 +23,11 @@ const videoTimeStrategy = (video, state) => (video.currentTime - lastCapture.vid
 const realTimeStrategy = (video, state) => (Date.now() - lastCapture.realTime) / (INTERVAL_CAPTURE_SECONDS * 1000);
 
 const render = ({image, duration, resolution, blurRadius}) => ReactDOM.render(<Fader className="fullscreen" containerClassName="fullscreen" blurRadius={blurRadius} image={image} fadeDuration={duration} fadeResolution={resolution} maxLayers={5} />, document.getElementById('fader'));
-const waitUntilReady = (fn, video, limit = 10) => () => {
-  if (video.readyState !== 4 && limit > 0) {
-    console.log(`⏸ Delaying capture ${limit}`);
-    setTimeout(waitUntilReady(fn, video, limit-1), 50);
-  } else {
+const waitUntilReady = (fn, video, waitLimit = 1000, interval = 50) => () => {
+  if (video.readyState !== 4 && waitLimit > 0) {
+    console.log(`⏸ Delaying capture ${waitLimit}ms left`);
+    setTimeout(waitUntilReady(fn, video, waitLimit - interval), interval);
+  } else if (waitLimit > 0) {
     fn();
   }
 }
